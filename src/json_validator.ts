@@ -7,6 +7,8 @@ export interface IValidationResult {
     errors: any[];
 }
 
+type LogFunc = (level: string, message: string) => void;
+
 /**
  * 
  */
@@ -70,7 +72,7 @@ export class JsonValidator {
      * @param schemaFilePaths 
      * @returns 
      */
-    static fromSchemaFilePaths(schemaFilePaths: string[]): JsonValidator {
+    static fromSchemaFilePaths(schemaFilePaths: string[], feedback: LogFunc): JsonValidator {
 
         // Create a new instance of the AJV object
         const ajv = new Ajv();
@@ -84,7 +86,7 @@ export class JsonValidator {
             // Check if a file exists for the given path
             const exists = fs.existsSync(filepath);
             if(!exists) {
-                console.warn(`No json schema found for path: ${filepath}! skipping...`);
+                feedback("warn", `No json schema found for path: ${filepath}! skipping...`);
                 continue;
             }
 
@@ -97,20 +99,20 @@ export class JsonValidator {
 
             // Check if a title was given, if not skip this json schema and log a warning
             if(schemaTitle === undefined) {
-                console.warn(`No title found for json schema for path: ${filepath}! skipping...`);
+                feedback("warn", `No title found for json schema for path: ${filepath}! skipping...`);
                 continue;
             }
 
             // Check if the validator already has an entry for the given title
             if(commonMap.has(schemaTitle)) {
-                console.warn(`Duplicate schema title '${schemaTitle}' for path: ${filepath}! skipping...`);
+                feedback("warn", `Duplicate schema title '${schemaTitle}' for path: ${filepath}! skipping...`);
                 continue;
             }
 
             // Add the schema to the common map
             commonMap.set(schemaTitle, jsonSchema);
 
-            console.log(`Found json schema '${schemaTitle}' in '${filepath}'`);
+            feedback("log", `Found json schema '${schemaTitle}' in '${filepath}'`);
         }
 
         // Add all the found schema's as a common schema to the ajv instance
@@ -119,17 +121,25 @@ export class JsonValidator {
         // Create a validator map
         const validatorMap = new Map<string,ValidateFunction<unknown>>();
 
+        let successCount = 0;
+        let errorCount = 0;
         // Iterate through the commonMap entries
         for(const [schemaTitle,jsonSchema] of commonMap.entries()) {
             try {
                 const validateFunc: ValidateFunction<unknown> = ajv.compile(jsonSchema);
                 validatorMap.set(schemaTitle, validateFunc);
-                console.log(`Added json validator schema: ${schemaTitle}`);
+                feedback("log", `Added json validator schema: ${schemaTitle}`);
+                successCount++;
             }
             catch(e) {
-                console.error("Error while compiling json schema validator function: ", e);
+                feedback("error", `Error while compiling json schema validator function: ${e}`);
+                errorCount++;
             }
         }
+
+        feedback("info", `Found ${commonMap.size} schemas...`);
+        feedback("info", `Added ${successCount} schemas.`);
+        feedback("info", `${errorCount} schema's resulted in errors.`);
 
         // Return a new instance of the JsonValidator
         return new JsonValidator(validatorMap);
