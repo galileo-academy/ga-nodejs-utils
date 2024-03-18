@@ -3,6 +3,7 @@ export interface IValidationResult {
     validationSuccess: boolean;
     errors: any[];
 }
+type LogFunc = (level: string, message: string) => void;
 /**
  *
  */
@@ -26,5 +27,6 @@ export declare class JsonValidator {
      * @param schemaFilePaths
      * @returns
      */
-    static fromSchemaFilePaths(schemaFilePaths: string[]): JsonValidator;
+    static fromSchemaFilePaths(schemaFilePaths: string[], feedback: LogFunc): JsonValidator;
 }
+export {};
