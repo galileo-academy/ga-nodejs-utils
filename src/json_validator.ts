@@ -9,14 +9,16 @@ export interface IValidationResult {
 
 type LogFunc = (level: string, message: string) => void;
 
+type ValidationFunction = (data: any) => IValidationResult;
+
 /**
  * 
  */
 export class JsonValidator {
 
-    private readonly validatorMap: Map<string,ValidateFunction<unknown>>;
+    private readonly validatorMap: Map<string,ValidationFunction>;
 
-    private constructor(validatorMap: Map<string,ValidateFunction<unknown>>) {
+    private constructor(validatorMap: Map<string,ValidationFunction>) {
         this.validatorMap = validatorMap;
     }
 
@@ -34,22 +36,34 @@ export class JsonValidator {
      * @param validator 
      * @param object 
      */
-    validateObject(validatorKey: string, data: any): IValidationResult {
+    validateObject(validatorKey: string, data: any): IValidationResult | undefined {
+        // Get the validator from the validator map
+        const validator = this.getValidatorForSchema(validatorKey);
+
+        // If no validator was found, return undefined
+        if(validator === undefined) {
+            return undefined;
+        }
+
+        // Return the result of the validator function
+        return validator(data);
+    }
+
+    /**
+     * 
+     */
+    getValidatorForSchema(schemaKey: string): ValidationFunction | undefined {
+        // Get the validator from the validator map
+        return this.validatorMap.get(schemaKey);
+    }
+
+    private static _validateObject(validator: ValidateFunction<unknown>, data: any) {
         // Create a new ValidationResult object
         const result: IValidationResult = {
             validatorFound: true,
             validationSuccess: false,
             errors: []
         };
-
-        // Get the validator from the validator map
-        const validator = this.validatorMap.get(validatorKey);
-
-        // If no validator was found, return the result with the validatorFound flag to false
-        if(validator === undefined) {
-            result.validatorFound = false;
-            return result;
-        }
 
         // Calidator the data
         const isValid = validator(data);
@@ -119,7 +133,7 @@ export class JsonValidator {
         commonMap.forEach((schema, key) => ajv.addSchema(schema, `#${key}`));
 
         // Create a validator map
-        const validatorMap = new Map<string,ValidateFunction<unknown>>();
+        const validatorMap = new Map<string,ValidationFunction>();
 
         let successCount = 0;
         let errorCount = 0;
@@ -127,7 +141,7 @@ export class JsonValidator {
         for(const [schemaTitle,jsonSchema] of commonMap.entries()) {
             try {
                 const validateFunc: ValidateFunction<unknown> = ajv.compile(jsonSchema);
-                validatorMap.set(schemaTitle, validateFunc);
+                validatorMap.set(schemaTitle, (data) => JsonValidator._validateObject(validateFunc, data));
                 feedback("log", `Added json validator schema: ${schemaTitle}`);
                 successCount++;
             }
