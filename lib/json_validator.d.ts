@@ -4,6 +4,7 @@ export interface IValidationResult {
     errors: any[];
 }
 type LogFunc = (level: string, message: string) => void;
+type ValidationFunction = (data: any) => IValidationResult;
 /**
  *
  */
@@ -21,7 +22,12 @@ export declare class JsonValidator {
      * @param validator
      * @param object
      */
-    validateObject(validatorKey: string, data: any): IValidationResult;
+    validateObject(validatorKey: string, data: any): IValidationResult | undefined;
+    /**
+     *
+     */
+    getValidatorForSchema(schemaKey: string): ValidationFunction | undefined;
+    private static _validateObject;
     /**
      *
      * @param schemaFilePaths
