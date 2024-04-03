@@ -38,7 +38,7 @@ export class Logger<T> {
      */
     static createLogger<T>(outputFile: string): Logger<T> {
 
-        const logDirectory = `${process.cwd}/logs`;
+        const logDirectory = `${process.cwd()}/logs`;
         console.log(`Specifying log direction: ${logDirectory}`);
 
         const winstonLogger: winston.Logger = winston.createLogger({
