@@ -38,6 +38,9 @@ export class Logger<T> {
      */
     static createLogger<T>(outputFile: string): Logger<T> {
 
+        const logDirectory = `${process.cwd}/logs`;
+        console.log(`Specifying log direction: ${logDirectory}`);
+
         const winstonLogger: winston.Logger = winston.createLogger({
             level: 'info',
             levels: customLoggerLevels.levels,
@@ -60,7 +63,7 @@ export class Logger<T> {
 
                 // Add a daily rotator file transport
                 new winston.transports.DailyRotateFile({
-                    dirname: "./logs",
+                    dirname: logDirectory,
                     filename: `${outputFile}-%DATE%.log`,
                     datePattern: "YYYY-MM-DD",
                     zippedArchive: true,
