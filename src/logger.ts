@@ -1,5 +1,6 @@
 import winston from "winston";
 import 'winston-daily-rotate-file';
+import path from "path";
 
 const customLoggerLevels = {
     levels: {
@@ -38,7 +39,7 @@ export class Logger<T> {
      */
     static createLogger<T>(outputFile: string): Logger<T> {
 
-        const logDirectory = `${process.cwd()}/logs`;
+        const logDirectory = path.join(process.cwd(), "logs");
         console.log(`Specifying log direction: ${logDirectory}`);
 
         const winstonLogger: winston.Logger = winston.createLogger({
