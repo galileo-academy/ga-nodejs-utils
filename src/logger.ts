@@ -60,7 +60,7 @@ export class Logger<T> {
 
                 // Add a daily rotator file transport
                 new winston.transports.DailyRotateFile({
-                    dirname: "logs",
+                    dirname: "./logs",
                     filename: `${outputFile}-%DATE%.log`,
                     datePattern: "YYYY-MM-DD",
                     zippedArchive: true,
